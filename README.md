@@ -1,0 +1,2 @@
+# The Elements Of Computing Systems
+This repo is a follow along for the book of the same title, the goal of the book is to construct a computer from first principles. I have my solutions in the projects directory. 
