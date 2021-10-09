@@ -39,5 +39,56 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    // Select ALU output or instruction
+    And       (a=instruction[15], b=instruction[5], out=selectA);
+    Mux16     (a=instruction, b=aluOut, sel=selectA, out=aIn);
+
+    // A-Register
+    Not       (in=instruction[15], out=aInstruction);
+    Or        (a=aInstruction, b=selectA, out=loadA);
+    ARegister (in=aIn, load=loadA, out=aOut, out[0..14]=addressM);
+	
+    // D-Register
+    And       (a=instruction[15], b=instruction[4], out=loadD);
+    DRegister (in=aluOut, load=loadD, out=xIn);
+
+    // Select A-Register or Memory to deliver to ALU
+    Mux16     (a=aOut, b=inM, sel=instruction[12], out=yIn);
+
+    // Write to Memory
+    And       (a=instruction[15], b=instruction[3], out=writeM);
+    
+    // ALU
+    ALU       (
+                  x=xIn,
+                  y=yIn,
+                  zx=instruction[11],
+		  nx=instruction[10],
+		  zy=instruction[9],
+		  ny=instruction[8],
+		  f=instruction[7],
+		  no=instruction[6],
+		  zr=zrOut,
+                  ng=ngOut,
+                  out=aluOut, 
+                  out=outM
+              );
+    
+    // Jumps
+    // JEQ
+    And       (a=zrOut, b=instruction[1], out=jeq);
+    // JLT	
+    And       (a=ngOut, b=instruction[2], out=jlt);
+    // JGT
+    Or        (a=zrOut, b=ngOut, out=notPositive);
+    Not       (in=notPositive, out=positive);
+    And       (a=positive, b=instruction[0], out=jgt);
+    // Combine jumps
+    Or        (a=jlt, b=jeq, out=jle);
+    Or        (a=jle, b=jgt, out=jump);
+
+    // Program Counter
+    And       (a=instruction[15], b=jump, out=loadPc);
+    Not       (in=loadPc, out=incPc);
+    PC        (in=aOut, inc=incPc, load=loadPc, reset=reset, out[0..14]=pc);
 }
