@@ -53,7 +53,8 @@ CHIP CPU {
     DRegister (in=aluOut, load=loadD, out=xIn);
 
     // Select A-Register or Memory to deliver to ALU
-    Mux16     (a=aOut, b=inM, sel=instruction[12], out=yIn);
+    And       (a=instruction[15], b=instruction[12], out=amSelect);
+    Mux16     (a=aOut, b=inM, sel=amSelect, out=yIn);
 
     // Write to Memory
     And       (a=instruction[15], b=instruction[3], out=writeM);
